@@ -32,8 +32,8 @@ const setupTransport = (user, pass, from, verbose) => {
     {
       service: 'Mandrill',
       auth: {
-        user: user,
-        pass: pass
+        user,
+        pass
       },
       logger: true,
       debug: verbose
@@ -111,14 +111,14 @@ const handleBlocksAway = opts => {
 }
 
 const sendAlert = (handler, email, opts = {}) => {
-  let { subject, message } = handler(opts)
+  let { subject, message } = Object.assign({ message: '' }, handler(opts))
 
   // Add error if available
   if (opts.err) {
     message += '\nStack:\n' + opts.err
   }
 
-  return sendMail(email, subject, message || '')
+  return sendMail(email, subject, message)
 }
 
 const healthCheck = async () => {
