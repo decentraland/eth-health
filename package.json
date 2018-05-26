@@ -1,0 +1,24 @@
+{
+  "name": "eth-checks",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "health": "./eth-health.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "babel-eslint": "^8.2.3",
+    "babel-preset-env": "^1.6.1",
+    "eslint": "^4.19.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "meow": "^5.0.0",
+    "minimist": "^1.2.0",
+    "nodemailer": "^4.6.4",
+    "prettier": "^1.12.1",
+    "winston": "^2.4.2"
+  }
+}
