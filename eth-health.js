@@ -4,6 +4,7 @@ import axios from 'axios'
 import minimist from 'minimist'
 import nodemailer from 'nodemailer'
 import os from 'os'
+import { IncomingWebhook } from '@slack/client'
 import winston from 'winston'
 
 const networkPrefix = process.env.NETWORK === 'ropsten' ? 'ropsten' : 'api'
@@ -11,9 +12,10 @@ const networkPrefix = process.env.NETWORK === 'ropsten' ? 'ropsten' : 'api'
 const ETHERSCAN_URL = `http://${networkPrefix}.etherscan.io/api?module=proxy&action=eth_blockNumber`
 const NODE_URL = 'http://localhost:8545'
 
-let opts = null
-let transport = null
 let logger = null
+let opts = null
+let emailTransport = null
+let slackTransport = null
 
 const setupLogging = verbose => {
   const log = new winston.Logger()
@@ -27,7 +29,7 @@ const setupLogging = verbose => {
   return log
 }
 
-const setupTransport = (user, pass, from, verbose) => {
+const setupEmailTransport = (user, pass, from, verbose) => {
   return nodemailer.createTransport(
     {
       service: 'Mandrill',
@@ -44,7 +46,11 @@ const setupTransport = (user, pass, from, verbose) => {
   )
 }
 
-const sendMail = (to, subject, text) => {
+const setupSlackTransport = url => {
+  return new IncomingWebhook(url)
+}
+
+const sendEmailMessage = (to, subject, text) => {
   if (!to) {
     throw new Error('You need to supply an email to send to')
   }
@@ -52,15 +58,32 @@ const sendMail = (to, subject, text) => {
   const message = { to, subject, text }
 
   return new Promise((resolve, reject) =>
-    transport.sendMail(message, (err, info) => {
+    emailTransport.sendMail(message, (err, info) => {
       if (err) {
         reject(err, err.stack)
         return
       }
-      logger.debug(`Email ${info.messageId} sent: ${info.response}`)
+      logger.debug(
+        `[msg:email] (${info.messageId} ${info.response}) ${to} => ${text}`
+      )
       resolve(info.response)
     })
   )
+}
+
+const sendSlackMessage = (text, channel) => {
+  const payload = { text, channel }
+
+  return new Promise((resolve, reject) => {
+    slackTransport.send(payload, (err, res) => {
+      if (err) {
+        reject(err, err.stack)
+        return
+      }
+      logger.debug(`[msg:slack] #${channel} => ${text}`)
+      resolve(res)
+    })
+  })
 }
 
 const getEthBlockNumber = () => {
@@ -100,31 +123,37 @@ const handleNoBlockNumbers = () => {
   }
 }
 
-const handleBlocksAway = opts => {
-  const { blocksAway } = opts
+const handleBlocksAway = params => {
+  const { blocksAway } = params
   return {
-    subject: `(${os.hostname()}) ETH node lagging behind`,
+    subject: `(${os.hostname()}) ETH node lagging behind ${blocksAway} blocks`,
     message: `
       (${os.hostname()}) ETH node is behind REF by ${blocksAway} blocks
     `
   }
 }
 
-const sendAlert = (handler, email, opts = {}) => {
-  let { subject, message } = Object.assign({ message: '' }, handler(opts))
+const sendAlert = (handler, params = {}) => {
+  let { subject, message } = Object.assign({ message: '' }, handler(params))
 
   // Add error if available
-  if (opts.err) {
-    message += '\nStack:\n' + opts.err
+  if (params.err) {
+    message += '\nStack:\n' + params.err
   }
 
-  return sendMail(email, subject, message)
+  // Send notifications
+  const tasks = []
+  if (emailTransport) {
+    tasks.push(sendEmailMessage(opts.email, subject, message))
+  }
+  if (slackTransport) {
+    tasks.push(sendSlackMessage(subject, opts.channel))
+  }
+  return Promise.all(tasks)
 }
 
 const healthCheck = async () => {
   logger.info('[Health] Node in sync...')
-
-  transport = setupTransport(opts.user, opts.pass, opts.from, opts.verbose)
 
   try {
     const ethBlockNumber = await getEthBlockNumber()
@@ -135,7 +164,7 @@ const healthCheck = async () => {
       // Data available
       if (!ethBlockNumber || !refBlockNumber) {
         logger.info('[Health] ❌ Fail => Unable to fetch block numbers')
-        return sendAlert(handleNoBlockNumbers, opts.email)
+        return sendAlert(handleNoBlockNumbers)
       }
 
       // Blocks away
@@ -144,17 +173,17 @@ const healthCheck = async () => {
         logger.info(
           `[Health] ❌ Fail => REF (${refBlockNumber}) is ${blocksAway} blocks ahead of node (${ethBlockNumber})`
         )
-        return sendAlert(handleBlocksAway, opts.email, { blocksAway })
+        return sendAlert(handleBlocksAway, { blocksAway })
       }
 
       logger.info('[Health] ✅ Pass')
     } catch (err) {
       logger.error(err)
-      return sendAlert(handleRefConnectionError, opts.email, { err })
+      return sendAlert(handleRefConnectionError, { err })
     }
   } catch (err) {
     logger.error(err)
-    return sendAlert(handleEthConnectionError, opts.email, { err })
+    return sendAlert(handleEthConnectionError, { err })
   }
 }
 
@@ -174,5 +203,20 @@ const parseArgs = () => {
 if (require.main === module) {
   opts = parseArgs()
   logger = setupLogging(opts.verbose)
+
+  // Enable transports
+  if (opts.email) {
+    emailTransport = setupEmailTransport(
+      opts.user,
+      opts.pass,
+      opts.from,
+      opts.verbose
+    )
+  }
+  if (opts.slackws) {
+    slackTransport = setupSlackTransport(opts.slackws)
+  }
+
+  // Run checks
   Promise.resolve(healthCheck())
 }
