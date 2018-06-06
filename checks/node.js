@@ -3,6 +3,8 @@ import Check from '.'
 import Alert from '../alerts'
 import { logger } from '../logger'
 
+const networkPrefix = process.env.NETWORK === 'ropsten' ? 'ropsten' : 'api'
+
 const NODE_URL = 'http://localhost:8545'
 const ETHERSCAN_URL = `http://${networkPrefix}.etherscan.io/api?module=proxy&action=eth_blockNumber`
 

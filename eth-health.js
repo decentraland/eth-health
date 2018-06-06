@@ -7,8 +7,6 @@ import { NodeHealthCheck } from './checks/node'
 import { logger, setupLogger } from './logger'
 import { Transporter, EmailTransport, SlackTransport } from './transports'
 
-const networkPrefix = process.env.NETWORK === 'ropsten' ? 'ropsten' : 'api'
-
 let opts = null
 let transporter = null
 
