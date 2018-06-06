@@ -69,7 +69,7 @@ const alertToMessage = {
 
 const handleAlert = (alert, engine) => {
   const { text, body } = alertToMessage[alert.name](alert)
-  engine.sendAlert(text, body)
+  return engine.sendAlert(text, body)
 }
 
 const addHandlers = engine => {
