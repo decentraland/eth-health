@@ -45,12 +45,13 @@ export default class Engine {
       if (!alert) {
         continue
       }
-      if (!(alert.name in this.handlers)) {
-        continue
-      }
 
       // Failed check execute handler
       try {
+        if (!(alert.name in this.handlers)) {
+          throw new Error(`Unhandled alert (${alert.name})`)
+        }
+
         await this.handlers[alert.name](alert, this)
       } catch (err) {
         logger.error(err)
