@@ -80,7 +80,7 @@ const addHandlers = engine => {
 }
 
 const addChecks = engine => {
-  engine.addCheck(new NodeHealthCheck())
+  engine.addCheck(new NodeHealthCheck(opts.blocks))
 }
 
 const start = async engine => {

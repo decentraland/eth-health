@@ -9,6 +9,11 @@ const NODE_URL = 'http://localhost:8545'
 const ETHERSCAN_URL = `http://${networkPrefix}.etherscan.io/api?module=proxy&action=eth_blockNumber`
 
 export class NodeHealthCheck extends Check {
+  constructor(blocks) {
+    super()
+    this.blocks = parseInt(blocks)
+  }
+
   getEthBlockNumber() {
     return axios
       .post(NODE_URL, {
@@ -47,7 +52,7 @@ export class NodeHealthCheck extends Check {
 
         // Blocks away
         const blocksAway = refBlockNumber - ethBlockNumber
-        if (blocksAway > parseInt(opts.blocks)) {
+        if (blocksAway > this.blocks) {
           logger.info(
             `[NodeHealthCheck] ❌ Fail => REF (${refBlockNumber}) is ${blocksAway} blocks ahead of node (${ethBlockNumber})`
           )
