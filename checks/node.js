@@ -4,6 +4,7 @@ import Alert from '../alerts'
 import { logger } from '../logger'
 
 const NODE_URL = 'http://localhost:8545'
+const ETHERSCAN_URL = `http://${networkPrefix}.etherscan.io/api?module=proxy&action=eth_blockNumber`
 
 export class NodeHealthCheck extends Check {
   getEthBlockNumber() {

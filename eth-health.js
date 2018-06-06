@@ -9,8 +9,6 @@ import { Transporter, EmailTransport, SlackTransport } from './transports'
 
 const networkPrefix = process.env.NETWORK === 'ropsten' ? 'ropsten' : 'api'
 
-const ETHERSCAN_URL = `http://${networkPrefix}.etherscan.io/api?module=proxy&action=eth_blockNumber`
-
 let opts = null
 let transporter = null
 
