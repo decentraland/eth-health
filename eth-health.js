@@ -72,17 +72,6 @@ const handleAlert = (alert, engine) => {
   return engine.sendAlert(text, body)
 }
 
-const addHandlers = engine => {
-  engine.addHandler('refConnectionError', handleAlert)
-  engine.addHandler('ethConnectionError', handleAlert)
-  engine.addHandler('noBlockNumbersError', handleAlert)
-  engine.addHandler('blocksAwayError', handleAlert)
-}
-
-const addChecks = engine => {
-  engine.addCheck(new NodeHealthCheck(opts.blocks))
-}
-
 const start = async engine => {
   await engine.execute()
 }
@@ -97,7 +86,13 @@ if (require.main === module) {
   transporter = setupTransporter()
 
   const engine = new Engine(transporter)
-  addHandlers(engine)
-  addChecks(engine)
+  engine.addHandlers([
+    ['refConnectionError', handleAlert],
+    ['ethConnectionError', handleAlert],
+    ['noBlockNumbersError', handleAlert],
+    ['blocksAwayError', handleAlert]
+  ])
+  engine.addChecks([new NodeHealthCheck(opts.blocks)])
+
   Promise.resolve(start(engine)).catch(logger.error)
 }

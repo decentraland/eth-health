@@ -11,12 +11,20 @@ export default class Engine {
     this.checks.push(check)
   }
 
+  addChecks(checks) {
+    checks.map(check => this.addCheck(check))
+  }
+
   clearChecks() {
     this.checks = []
   }
 
   addHandler(name, handler) {
     this.handlers[name] = handler
+  }
+
+  addHandlers(handlers) {
+    handlers.map(([name, fn]) => this.addHandler(name, fn))
   }
 
   delHandler(name) {
