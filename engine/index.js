@@ -43,7 +43,7 @@ export default class Engine {
 
       // Failed check execute handler
       try {
-        await this.handlers[alert.name](alert.name, alert.params, this)
+        await this.handlers[alert.name](alert, this)
       } catch (err) {
         logger.error(err)
       }

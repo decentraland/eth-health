@@ -56,8 +56,8 @@ const alertToMessage = {
   noBlockNumbersError: () => {
     return { text: `(${os.hostname()}) Unable to fetch block numbers :(` }
   },
-  blocksAwayError: params => {
-    const { blocksAway } = params
+  blocksAwayError: alert => {
+    const { blocksAway } = alert.params
     return {
       text: `(${os.hostname()}) ETH node lagging behind ${blocksAway} blocks`,
       body: `
@@ -67,8 +67,8 @@ const alertToMessage = {
   }
 }
 
-const handleAlert = (name, params, engine) => {
-  const { text, body } = alertToMessage[name](params)
+const handleAlert = (alert, engine) => {
+  const { text, body } = alertToMessage[alert.name](alert)
   engine.sendAlert(text, body)
 }
 
