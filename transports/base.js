@@ -31,10 +31,10 @@ export class Transporter {
 
   send(name, text, body) {
     const transport = this.transports[name]
-    if (transport) {
-      return transport.send(text, body)
+    if (!transport) {
+      throw new Error(`${name} transport does not exist`)
     }
-    return null
+    return transport.send(text, body)
   }
 
   sendAll(text, body) {
