@@ -36,6 +36,9 @@ export default class Engine {
   }
 
   sendAlert(text, body) {
+    if (!this.transporter) {
+      throw new Error('No transporter specified for alerts')
+    }
     return this.transporter.sendAll(text, body)
   }
 
