@@ -3,7 +3,11 @@
 import minimist from 'minimist'
 import os from 'os'
 import Engine from './engine'
-import { NodeHealthCheck } from './checks/node'
+import {
+  NodeConnectionCheck,
+  ReferenceNodeCheck,
+  BlocksAwayCheck
+} from './checks/node'
 import { logger, setupLogger } from './logger'
 import { Transporter, EmailTransport, SlackTransport } from './transports'
 
@@ -92,7 +96,11 @@ if (require.main === module) {
     ['noBlockNumbersError', handleAlert],
     ['blocksAwayError', handleAlert]
   ])
-  engine.addChecks([new NodeHealthCheck(opts.blocks)])
+  engine.addChecks([
+    new NodeConnectionCheck(),
+    new ReferenceNodeCheck(),
+    new BlocksAwayCheck(opts.blocks)
+  ])
 
   Promise.resolve(start(engine)).catch(logger.error)
 }

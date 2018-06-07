@@ -43,8 +43,11 @@ export default class Engine {
   }
 
   async execute() {
+    const context = {}
     for (const check of this.checks) {
-      const alert = await check.execute()
+      logger.info(`[${check.constructor.name}] Running...`)
+      const alert = await check.execute(context)
+      logger.info(`[${check.constructor.name}] ✅ Pass`)
       if (!alert) {
         continue
       }
